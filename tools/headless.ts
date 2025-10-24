@@ -51,6 +51,7 @@ export async function runHeadless(headlessConfig: THeadlessConfig) {
     ProgressManager.Get.clear();
 
     if (headlessConfig.debug.showLogs) {
+        Logger.Get.enableLOG();
         Logger.Get.enableLOGMAJOR();
     }
     if (headlessConfig.debug.showWarnings) {

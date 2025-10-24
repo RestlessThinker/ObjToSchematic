@@ -12,9 +12,12 @@ class LocalFile implements FileLike {
     public readonly name: string;
     public readonly type?: string;
 
-    public constructor(private readonly absolutePath: string, mimeType: string) {
+    private readonly absolutePath: string;
+
+    public constructor(absolutePath: string, mimeType: string) {
         this.name = path.basename(absolutePath);
         this.type = mimeType;
+        this.absolutePath = absolutePath;
     }
 
     public async text(): Promise<string> {
@@ -25,6 +28,34 @@ class LocalFile implements FileLike {
         const buffer = await fs.readFile(this.absolutePath);
         const { buffer: rawBuffer, byteLength, byteOffset } = buffer;
         return rawBuffer.slice(byteOffset, byteOffset + byteLength);
+    }
+
+    public async getSibling(relativePath: string): Promise<FileLike | undefined> {
+        const resolved = path.resolve(path.dirname(this.absolutePath), relativePath);
+        try {
+            await fs.access(resolved);
+        } catch {
+            return undefined;
+        }
+
+        return new LocalFile(resolved, LocalFile.inferMime(resolved));
+    }
+
+    private static inferMime(filePath: string): string {
+        const ext = path.extname(filePath).toLowerCase();
+        switch (ext) {
+            case '.obj':
+                return 'model/obj';
+            case '.mtl':
+                return 'text/plain';
+            case '.png':
+                return 'image/png';
+            case '.jpg':
+            case '.jpeg':
+                return 'image/jpeg';
+            default:
+                return 'application/octet-stream';
+        }
     }
 }
 

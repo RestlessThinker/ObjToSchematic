@@ -16,6 +16,11 @@ export interface FileLike {
      * Returns the raw file contents so loaders that expect ArrayBuffers can function.
      */
     arrayBuffer(): Promise<ArrayBuffer>;
+    /**
+     * Optional hook for retrieving files that live alongside this file (e.g.
+     * material libraries or texture maps referenced from an OBJ).
+     */
+    getSibling?(relativePath: string): Promise<FileLike | undefined>;
 }
 
 export function assertFileLike(file: FileLike | undefined | null): asserts file is FileLike {
