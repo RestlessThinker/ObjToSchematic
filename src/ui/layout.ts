@@ -181,6 +181,7 @@ export class UI {
                     .addItem({ payload: 'ray-based', displayLocKey: 'voxelise.components.ray_based' })
                     .addItem({ payload: 'bvh-ray', displayLocKey: 'voxelise.components.bvh_ray' })
                     .addItem({ payload: 'ncrb', displayLocKey: 'voxelise.components.ncrb' })
+                    .setDefaultValue('ncrb')
                     .setLabel('voxelise.components.algorithm'),
                 'ambientOcclusion': new CheckboxComponent()
                     .setCheckedText('voxelise.components.on_recommended')

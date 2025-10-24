@@ -7,6 +7,7 @@ import { AppError, ASSERT } from '../util/error_util';
 import { RegExpBuilder } from '../util/regex_util';
 import { REGEX_NZ_ANY } from '../util/regex_util';
 import { REGEX_NUMBER } from '../util/regex_util';
+import { FileLike } from '../util/file_like';
 import { Vector3 } from '../vector';
 import { IImporter } from './base_importer';
 
@@ -176,7 +177,7 @@ export class ObjImporter extends IImporter {
         },
     ];
 
-    public override import(file: File): Promise<Mesh> {
+    public override import(file: FileLike): Promise<Mesh> {
         return file.text().then((fileSource) => {
             if (fileSource.includes('�')) {
                 throw new AppError(LOC('import.invalid_encoding'));
@@ -186,11 +187,15 @@ export class ObjImporter extends IImporter {
             const fileLines = fileSource.split('\n');
             const numLines = fileLines.length;
 
-            const progressHandle = ProgressManager.Get.start('VoxelMeshBuffer');
-            fileLines.forEach((line, index) => {
-                this.parseOBJLine(line);
-                ProgressManager.Get.progress(progressHandle, index / numLines);
-            })
+            const progressHandle = ProgressManager.Get.start('Importing');
+            try {
+                fileLines.forEach((line, index) => {
+                    this.parseOBJLine(line);
+                    ProgressManager.Get.progress(progressHandle, index / numLines);
+                });
+            } finally {
+                ProgressManager.Get.end(progressHandle);
+            }
 
             return new Mesh(this._vertices, this._normals, this._uvs, this._tris, new Map());
         });

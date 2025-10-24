@@ -7,22 +7,16 @@ import { MaterialMap, MaterialType, Mesh, Tri } from '../mesh';
 import { StatusHandler } from '../status';
 import { UV } from '../util';
 import { AppError } from '../util/error_util';
+import { FileLike } from '../util/file_like';
 import { Vector3 } from '../vector';
 import { IImporter } from './base_importer';
 
 export class GltfLoader extends IImporter {
-    public override import(file: File): Promise<Mesh> {
+    public override async import(file: FileLike): Promise<Mesh> {
         StatusHandler.warning(LOC('import.gltf_experimental'));
 
-        return new Promise<Mesh>((resolve, reject) => {
-            parse(file, GLTFLoader, { loadImages: true })
-                .then((gltf: any) => {
-                    resolve(this._handleGLTF(gltf));
-                })
-                .catch((err: any) => {
-                    reject(err);
-                });
-        });
+        const gltf = await parse(await file.arrayBuffer(), GLTFLoader, { loadImages: true });
+        return this._handleGLTF(gltf);
     }
 
     private _handleGLTF(gltf: any): Mesh {

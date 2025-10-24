@@ -8,6 +8,7 @@ import { MaterialMap } from './mesh';
 import { TMessage } from './ui/console';
 import { ColourSpace } from './util';
 import { AppError } from './util/error_util';
+import { FileLike } from './util/file_like';
 import { TAxis } from './util/type_util';
 import { TDithering } from './util/type_util';
 import { Vector3 } from './vector';
@@ -33,7 +34,7 @@ export namespace SettingsParams {
 
 export namespace ImportParams {
     export type Input = {
-        file: File,
+        file: FileLike,
         rotation: Vector3,
     }
 

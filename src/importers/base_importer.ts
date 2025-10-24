@@ -1,5 +1,6 @@
 import { Mesh } from '../mesh';
+import { FileLike } from '../util/file_like';
 
 export abstract class IImporter {
-    public abstract import(file: File): Promise<Mesh>;
+    public abstract import(file: FileLike): Promise<Mesh>;
 }
