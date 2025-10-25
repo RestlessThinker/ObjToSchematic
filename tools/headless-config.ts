@@ -59,43 +59,57 @@ class LocalFile implements FileLike {
     }
 }
 
-const OBJ_FILE_PATH = path.resolve(__dirname, '../3dmodels/truck/model-mobile.obj');
+const DEFAULT_OBJ_FILE_PATH = path.resolve(__dirname, '../3dmodels/truck/model-mobile.obj');
 
-const defaultObjFile = new LocalFile(OBJ_FILE_PATH, 'model/obj');
 const defaultFallable: FallableBehaviour = 'replace-falling';
 
-export const headlessConfig: THeadlessConfig = {
-    import: {
-        file: defaultObjFile,
-        rotation: new Vector3(0, 0, 0),
-    },
-    voxelise: {
-        constraintAxis: 'y',
-        voxeliser: 'ncrb',
-        size: 80,
-        useMultisampleColouring: true,
-        voxelOverlapRule: 'average',
-        enableAmbientOcclusion: true,
-    },
-    assign: {
-        textureAtlas: 'vanilla',
-        blockPalette: PALETTE_ALL_RELEASE,
-        dithering: 'ordered',
-        ditheringMagnitude: 32,
-        colourSpace: ColourSpace.RGB,
-        fallable: defaultFallable,
-        resolution: 32,
-        calculateLighting: false,
-        lightThreshold: 1,
-        contextualAveraging: true,
-        errorWeight: 0.02,
-    },
-    export: {
-        exporter: 'schem',
-    },
-    debug: {
-        showLogs: true,
-        showWarnings: true,
-        showTimings: true,
-    },
-};
+async function resolveObjPath(objPath?: string): Promise<string> {
+    const candidate = objPath === undefined ? DEFAULT_OBJ_FILE_PATH : path.resolve(process.cwd(), objPath);
+    try {
+        await fs.access(candidate);
+    } catch {
+        throw new Error(`OBJ file not found at '${candidate}'`);
+    }
+    return candidate;
+}
+
+export async function createHeadlessConfig(objPath?: string): Promise<THeadlessConfig> {
+    const resolvedObjPath = await resolveObjPath(objPath);
+    const objFile = new LocalFile(resolvedObjPath, 'model/obj');
+
+    return {
+        import: {
+            file: objFile,
+            rotation: new Vector3(0, 0, 0),
+        },
+        voxelise: {
+            constraintAxis: 'y',
+            voxeliser: 'ncrb',
+            size: 80,
+            useMultisampleColouring: true,
+            voxelOverlapRule: 'average',
+            enableAmbientOcclusion: true,
+        },
+        assign: {
+            textureAtlas: 'vanilla',
+            blockPalette: PALETTE_ALL_RELEASE,
+            dithering: 'ordered',
+            ditheringMagnitude: 32,
+            colourSpace: ColourSpace.RGB,
+            fallable: defaultFallable,
+            resolution: 32,
+            calculateLighting: false,
+            lightThreshold: 1,
+            contextualAveraging: true,
+            errorWeight: 0.02,
+        },
+        export: {
+            exporter: 'schem',
+        },
+        debug: {
+            showLogs: true,
+            showWarnings: true,
+            showTimings: true,
+        },
+    };
+}
