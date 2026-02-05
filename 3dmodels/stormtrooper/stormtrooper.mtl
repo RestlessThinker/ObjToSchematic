@@ -1,0 +1,17 @@
+# USDConverter MTL File: stormtrooper.mtl
+
+newmtl material_1 # (Texture)
+	map_Kd stormtrooper/baked_mesh_eef7d3d6_tex0.png
+	Ka 0 0 0
+	Ks 0 0 0
+	map_ao stormtrooper/baked_mesh_eef7d3d6_ao0.png
+	subsurface 0
+	metallic 0
+	specularTint 0
+	roughness 0.9
+	anisotropicRotation 0
+	sheen 0.05
+	sheenTint 0
+	clearCoat 0
+	clearCoatGloss 0.99
+	map_tangentSpaceNormal stormtrooper/baked_mesh_eef7d3d6_norm0.png
