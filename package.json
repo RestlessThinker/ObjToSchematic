@@ -11,8 +11,10 @@
     "lint": "eslint --fix src tools tests --ext .ts",
     "lint-src": "eslint --fix src --ext .ts",
     "test": "jest --config jestconfig.json",
+    "test:headless-web": "jest --config jestconfig.json tests/in_memory_file_like.test.ts tests/ios_bridge.test.ts tests/obj_importer_data_uri_texture.test.ts tests/texture_data_uri_png.test.ts tests/web_headless_conversion.test.ts",
     "start": "webpack serve --config ./webpack.dev.js",
     "dist": "webpack --config ./webpack.prod.js",
+    "build:ios-web": "webpack --config ./webpack.ios-web.js",
     "atlas": "ts-node ./tools/build-atlas.ts",
     "headless": "ts-node ./tools/run-headless.ts",
     "build": "tsc"

@@ -67,16 +67,123 @@ export class Texture {
     }
 
     private _readRawData(params?: TImageRawWrap): TOptional<ImageData> {
+        const toHexPrefix = (bytes: Uint8Array, length: number) => {
+            const prefix = bytes.slice(0, Math.min(length, bytes.length));
+            return Array.from(prefix).map((value) => {
+                return value.toString(16).padStart(2, '0');
+            }).join('');
+        };
+
+        const toHexSuffix = (bytes: Uint8Array, length: number) => {
+            const begin = Math.max(0, bytes.length - length);
+            const suffix = bytes.slice(begin, bytes.length);
+            return Array.from(suffix).map((value) => {
+                return value.toString(16).padStart(2, '0');
+            }).join('');
+        };
+
+        const parseDataUriBytes = (dataUri: string): Uint8Array | undefined => {
+            const commaIndex = dataUri.indexOf(',');
+            if (commaIndex < 0) {
+                return undefined;
+            }
+
+            const metadata = dataUri.slice(0, commaIndex).toLowerCase();
+            const payload = dataUri.slice(commaIndex + 1).trim();
+
+            if (metadata.includes(';base64')) {
+                if (typeof atob === 'function') {
+                    const binary = atob(payload);
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; ++i) {
+                        bytes[i] = binary.charCodeAt(i);
+                    }
+                    return bytes;
+                }
+
+                return Uint8Array.from(Buffer.from(payload, 'base64'));
+            }
+
+            const decoded = decodeURIComponent(payload);
+            const bytes = new Uint8Array(decoded.length);
+            for (let i = 0; i < decoded.length; ++i) {
+                bytes[i] = decoded.charCodeAt(i);
+            }
+            return bytes;
+        };
+
+        const trimPngTrailingBytes = (bytes: Uint8Array): Uint8Array => {
+            if (bytes.length < 12) {
+                return bytes;
+            }
+
+            const PNG_SIGNATURE = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+            for (let i = 0; i < PNG_SIGNATURE.length; ++i) {
+                if (bytes[i] !== PNG_SIGNATURE[i]) {
+                    return bytes;
+                }
+            }
+
+            const readU32BE = (offset: number) => {
+                return (((bytes[offset] << 24) >>> 0) | (bytes[offset + 1] << 16) | (bytes[offset + 2] << 8) | bytes[offset + 3]) >>> 0;
+            };
+
+            let offset = 8;
+            while (offset + 12 <= bytes.length) {
+                const chunkLength = readU32BE(offset);
+                const typeOffset = offset + 4;
+                const chunkEnd = typeOffset + 4 + chunkLength + 4;
+                if (chunkEnd > bytes.length) {
+                    break;
+                }
+
+                const chunkType = String.fromCharCode(
+                    bytes[typeOffset],
+                    bytes[typeOffset + 1],
+                    bytes[typeOffset + 2],
+                    bytes[typeOffset + 3],
+                );
+                if (chunkType === 'IEND') {
+                    return bytes.slice(0, chunkEnd);
+                }
+
+                offset = chunkEnd;
+            }
+
+            return bytes;
+        };
+
         if (params?.filetype === 'png') {
-            const png = params.raw.split(',')[1];
-            if (png !== undefined) {
-                return PNG.sync.read(Buffer.from(png, 'base64'));
+            const pngBytes = parseDataUriBytes(params.raw);
+            if (pngBytes !== undefined) {
+                try {
+                    return PNG.sync.read(Buffer.from(pngBytes));
+                } catch (error) {
+                    const trimmed = trimPngTrailingBytes(pngBytes);
+                    try {
+                        if (trimmed.length !== pngBytes.length) {
+                            return PNG.sync.read(Buffer.from(trimmed));
+                        }
+                    } catch (trimmedError) {
+                        const baseMessage = trimmedError instanceof Error ? trimmedError.message : String(trimmedError);
+                        throw new Error(
+                            `PNG decode failed after trim; bytes=${pngBytes.length}, trimmed=${trimmed.length}, ` +
+                            `head=${toHexPrefix(pngBytes, 16)}, tail=${toHexSuffix(pngBytes, 16)}, reason=${baseMessage}`,
+                        );
+                    }
+
+                    const baseMessage = error instanceof Error ? error.message : String(error);
+                    throw new Error(
+                        `PNG decode failed; bytes=${pngBytes.length}, head=${toHexPrefix(pngBytes, 16)}, ` +
+                        `tail=${toHexSuffix(pngBytes, 16)}, reason=${baseMessage}`,
+                    );
+                }
             }
         }
         if (params?.filetype === 'jpg') {
-            const jpg = params.raw.split(',')[1];
-            if (jpg !== undefined) {
-                return jpeg.decode(Buffer.from(jpg, 'base64'), {
+            const jpgBytes = parseDataUriBytes(params.raw);
+            if (jpgBytes !== undefined) {
+                return jpeg.decode(Buffer.from(jpgBytes), {
                     maxMemoryUsageInMB: AppConfig.Get.MAXIMUM_IMAGE_MEM_ALLOC,
                     formatAsRGBA: true,
                 });

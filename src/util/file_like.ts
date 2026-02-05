@@ -17,6 +17,11 @@ export interface FileLike {
      */
     arrayBuffer(): Promise<ArrayBuffer>;
     /**
+     * Optional fast path for file implementations that already hold data in
+     * data URI form (e.g. embedded iOS web assets).
+     */
+    toDataUri?(): Promise<string | undefined>;
+    /**
      * Optional hook for retrieving files that live alongside this file (e.g.
      * material libraries or texture maps referenced from an OBJ).
      */

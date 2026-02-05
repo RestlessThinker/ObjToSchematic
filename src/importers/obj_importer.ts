@@ -348,6 +348,16 @@ export class ObjImporter extends IImporter {
                 return undefined;
         }
 
+        if (typeof file.toDataUri === 'function') {
+            const dataUri = await file.toDataUri();
+            if (dataUri !== undefined) {
+                return {
+                    filetype,
+                    raw: dataUri,
+                };
+            }
+        }
+
         const buffer = await file.arrayBuffer();
         const base64 = this._arrayBufferToBase64(buffer);
 

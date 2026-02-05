@@ -120,3 +120,10 @@ Here is where you can edit the materials that the loaded model uses. Any changes
 
 ### Export
 * **File format** - The format to save your structure to. The [Litematica](https://www.curseforge.com/minecraft/mc-mods/litematica) format is strongly recommended and is significantly faster to export to for large structures. The Schematic exporter is useful if you still play in 1.12 as it uses the old block ID system before The Flattening, however many new blocks cannot be encoded in this format so they will be turned into Stone blocks. The NBT exporter is used for Minecraft's [structure blocks](https://minecraft.wiki/w/Structure_Block). The OBJ exporter can be used to render your structres in a program such as Blender.
+
+## iOS Embedded Headless Runtime
+- Build the embedded web conversion bundle with `npm run build:ios-web`.
+- Open `ios/ObjToSchematicIOS/ObjToSchematicIOS.xcodeproj` and run the app target.
+- Tap `Convert Truck OBJ` in the app to run an in-webview headless `.obj -> .schem` conversion.
+- JS console logs are bridged to iOS logs with `WKScriptMessageHandler`, so conversion logs are visible in Xcode.
+- Run `npm run test:headless-web` for the new unit/integration tests that validate the headless web pipeline.
