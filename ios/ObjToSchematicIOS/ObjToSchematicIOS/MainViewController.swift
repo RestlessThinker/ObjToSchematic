@@ -1,8 +1,9 @@
+import ObjToSchematicKit
 import UIKit
-import WebKit
 
-final class MainViewController: UIViewController, WKScriptMessageHandler {
-    private(set) var webView: WKWebView!
+final class MainViewController: UIViewController {
+    private let converter = ObjToSchematicController()
+    private let webContainer = UIView()
 
     private let statusLabel = UILabel()
     private let convertButton = UIButton(type: .system)
@@ -11,26 +12,12 @@ final class MainViewController: UIViewController, WKScriptMessageHandler {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
 
-        configureWebView()
         configureUI()
         loadBridgePage()
     }
 
-    private func configureWebView() {
-        let userContentController = WKUserContentController()
-        userContentController.add(self, name: "logger")
-        userContentController.add(self, name: "conversionComplete")
-        userContentController.add(self, name: "conversionState")
-
-        let config = WKWebViewConfiguration()
-        config.userContentController = userContentController
-
-        webView = WKWebView(frame: .zero, configuration: config)
-        webView.translatesAutoresizingMaskIntoConstraints = false
-    }
-
     private func configureUI() {
-        convertButton.setTitle("Convert Truck OBJ", for: .normal)
+        convertButton.setTitle("Convert Demo OBJ", for: .normal)
         convertButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
         convertButton.addTarget(self, action: #selector(handleConvertTap), for: .touchUpInside)
         convertButton.translatesAutoresizingMaskIntoConstraints = false
@@ -41,9 +28,11 @@ final class MainViewController: UIViewController, WKScriptMessageHandler {
         statusLabel.numberOfLines = 0
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
 
+        webContainer.translatesAutoresizingMaskIntoConstraints = false
+
         view.addSubview(convertButton)
         view.addSubview(statusLabel)
-        view.addSubview(webView)
+        view.addSubview(webContainer)
 
         NSLayoutConstraint.activate([
             convertButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 24),
@@ -53,24 +42,20 @@ final class MainViewController: UIViewController, WKScriptMessageHandler {
             statusLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             statusLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
 
-            webView.topAnchor.constraint(equalTo: statusLabel.bottomAnchor, constant: 16),
-            webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            webView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            webContainer.topAnchor.constraint(equalTo: statusLabel.bottomAnchor, constant: 16),
+            webContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            webContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            webContainer.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
     }
 
     private func loadBridgePage() {
-        guard
-            let webAssetsURL = Bundle.main.resourceURL?.appendingPathComponent("WebAssets", isDirectory: true),
-            let indexURL = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "WebAssets")
-        else {
-            statusLabel.text = "Missing bundled WebAssets/index.html"
-            NSLog("ObjToSchematicIOS: missing WebAssets/index.html")
-            return
+        do {
+            try converter.load(into: webContainer)
+        } catch {
+            statusLabel.text = "Missing bundled WebAssets"
+            NSLog("ObjToSchematicIOS: missing WebAssets - \(error.localizedDescription)")
         }
-
-        webView.loadFileURL(indexURL, allowingReadAccessTo: webAssetsURL)
     }
 
     @objc
@@ -78,115 +63,60 @@ final class MainViewController: UIViewController, WKScriptMessageHandler {
         convertButton.isEnabled = false
         statusLabel.text = "Running conversion..."
 
-        runSampleConversion { [weak self] result in
+        guard let objPath = objPathForDemo() else {
+            statusLabel.text = "Missing demo OBJ in Documents"
+            convertButton.isEnabled = true
+            return
+        }
+
+        converter.convert(objPath: objPath) { [weak self] result in
             guard let self = self else {
                 return
             }
             self.convertButton.isEnabled = true
             switch result {
             case .success(let payload):
-                let filename = payload["filename"] as? String ?? "unknown"
-                let size = payload["size"] as? Int ?? 0
-                self.statusLabel.text = "Done: \(filename) (\(size) bytes)"
+                self.statusLabel.text = "Done: \(payload.filename) (\(payload.size) bytes)"
             case .failure(let error):
                 self.statusLabel.text = "Failed: \(error.localizedDescription)"
             }
         }
     }
 
-    func runSampleConversion(completion: @escaping (Result<[String: Any], Error>) -> Void) {
-        if #available(iOS 15.0, *) {
-            webView.callAsyncJavaScript(
-                "return await window.ObjToSchematicIOSBridge.runSampleConversionForTesting();",
-                arguments: [:],
-                in: nil,
-                in: .defaultClient,
-                completionHandler: { result in
-                    switch result {
-                    case .success(let value):
-                        if let payload = value as? [String: Any] {
-                            completion(.success(payload))
-                        } else {
-                            completion(.failure(NSError(
-                                domain: "ObjToSchematicIOS",
-                                code: 1001,
-                                userInfo: [NSLocalizedDescriptionKey: "Unexpected JS payload"]
-                            )))
-                        }
-                    case .failure(let error):
-                        completion(.failure(error))
-                    }
-                }
-            )
-            return
+    private func objPathForDemo() -> String? {
+        let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        let demoFolder = documents?.appendingPathComponent("ObjToSchematicDemo", isDirectory: true)
+        let objURL = demoFolder?.appendingPathComponent("model.obj")
+        let mtlURL = demoFolder?.appendingPathComponent("model.mtl")
+
+        guard let folder = demoFolder, let objURL = objURL, let mtlURL = mtlURL else {
+            return nil
         }
 
-        webView.evaluateJavaScript(
-            "window.ObjToSchematicIOSBridge.runSampleConversionForTesting().then(JSON.stringify)",
-            completionHandler: { value, error in
-                if let error = error {
-                    completion(.failure(error))
-                    return
-                }
-                guard
-                    let jsonString = value as? String,
-                    let data = jsonString.data(using: .utf8),
-                    let json = try? JSONSerialization.jsonObject(with: data, options: []),
-                    let payload = json as? [String: Any]
-                else {
-                    completion(.failure(NSError(
-                        domain: "ObjToSchematicIOS",
-                        code: 1002,
-                        userInfo: [NSLocalizedDescriptionKey: "Could not decode conversion payload"]
-                    )))
-                    return
-                }
-                completion(.success(payload))
-            }
-        )
-    }
-
-    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard let payload = message.body as? [String: Any] else {
-            NSLog("ObjToSchematicIOS [\(message.name)] invalid payload: \(message.body)")
-            return
+        if !FileManager.default.fileExists(atPath: folder.path) {
+            try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         }
 
-        switch message.name {
-        case "logger":
-            let level = payload["level"] as? String ?? "log"
-            let logMessage = payload["message"] as? String ?? ""
-            NSLog("ObjToSchematicIOS [JS \(level)] \(logMessage)")
-        case "conversionComplete":
-            persistOutput(payload: payload)
-        case "conversionState":
-            if let state = payload["message"] as? String {
-                NSLog("ObjToSchematicIOS [state] \(state)")
-            }
-            if let error = payload["error"] as? String {
-                NSLog("ObjToSchematicIOS [state-error] \(error)")
-            }
-        default:
-            break
-        }
-    }
-
-    private func persistOutput(payload: [String: Any]) {
-        guard
-            let filename = payload["filename"] as? String,
-            let base64 = payload["base64"] as? String,
-            let bytes = Data(base64Encoded: base64)
-        else {
-            NSLog("ObjToSchematicIOS: conversion payload missing output")
-            return
+        if !FileManager.default.fileExists(atPath: objURL.path) {
+            let obj = [
+                "mtllib model.mtl",
+                "o Demo",
+                "v 0 0 0",
+                "v 1 0 0",
+                "v 0 1 0",
+                "f 1 2 3",
+            ].joined(separator: "\n")
+            try? obj.write(to: objURL, atomically: true, encoding: .utf8)
         }
 
-        let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
-        do {
-            try bytes.write(to: outputURL, options: .atomic)
-            NSLog("ObjToSchematicIOS: wrote exported file to \(outputURL.path)")
-        } catch {
-            NSLog("ObjToSchematicIOS: failed to write output - \(error.localizedDescription)")
+        if !FileManager.default.fileExists(atPath: mtlURL.path) {
+            let mtl = [
+                "newmtl demo",
+                "Kd 0.7 0.7 0.7",
+            ].joined(separator: "\n")
+            try? mtl.write(to: mtlURL, atomically: true, encoding: .utf8)
         }
+
+        return objURL.path
     }
 }

@@ -1,14 +1,16 @@
-import { installIOSConsoleBridge, runSampleConversion } from './headless/ios_bridge';
+import { installIOSConsoleBridge, runConversionFromObjPath, runSampleConversion } from './headless/ios_bridge';
 
 type TBridgeResult = {
     filename: string,
     size: number,
+    error?: string,
 };
 
 declare global {
     interface Window {
         ObjToSchematicIOSBridge: {
             runSampleConversionForTesting: () => Promise<TBridgeResult>,
+            runConversionFromObjPathForTesting: (objPath: string) => Promise<TBridgeResult>,
         }
     }
 }
@@ -40,9 +42,44 @@ async function runFromButton(): Promise<void> {
     }
 }
 
-function setupUI(): void {
+function installBridge(): void {
     installIOSConsoleBridge();
 
+    window.ObjToSchematicIOSBridge = {
+        runSampleConversionForTesting: async () => {
+            try {
+                const result = await runSampleConversion();
+                return {
+                    filename: result.filename,
+                    size: result.content.length,
+                };
+            } catch (error: any) {
+                return {
+                    filename: '',
+                    size: 0,
+                    error: String(error),
+                };
+            }
+        },
+        runConversionFromObjPathForTesting: async (objPath: string) => {
+            try {
+                const result = await runConversionFromObjPath(objPath);
+                return {
+                    filename: result.filename,
+                    size: result.content.length,
+                };
+            } catch (error: any) {
+                return {
+                    filename: '',
+                    size: 0,
+                    error: String(error),
+                };
+            }
+        },
+    };
+}
+
+function setupUI(): void {
     const button = document.getElementById('convert-btn') as HTMLButtonElement | null;
     if (button !== null) {
         button.addEventListener('click', () => {
@@ -50,18 +87,10 @@ function setupUI(): void {
         });
     }
 
-    window.ObjToSchematicIOSBridge = {
-        runSampleConversionForTesting: async () => {
-            const result = await runSampleConversion();
-            return {
-                filename: result.filename,
-                size: result.content.length,
-            };
-        },
-    };
-
-    setStatus('Ready. Tap Convert Truck OBJ.');
+    setStatus('Ready. Tap Convert Demo OBJ.');
 }
+
+installBridge();
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', setupUI);

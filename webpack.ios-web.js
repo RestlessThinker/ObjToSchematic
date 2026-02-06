@@ -57,7 +57,7 @@ module.exports = {
     },
     output: {
         filename: 'bundle.js',
-        path: path.resolve(__dirname, './ios/ObjToSchematicIOS/ObjToSchematicIOS/WebAssets'),
+        path: path.resolve(__dirname, './ObjToSchematicKit/Sources/ObjToSchematicKit/Resources/WebAssets'),
         clean: true,
     },
     performance: {

@@ -9,8 +9,9 @@
 /* Begin PBXBuildFile section */
 		A10000000000000000000011 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000001 /* AppDelegate.swift */; };
 		A10000000000000000000012 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000002 /* MainViewController.swift */; };
-		A10000000000000000000013 /* WebAssets in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000003 /* WebAssets */; };
 		A10000000000000000000014 /* ObjToSchematicIOSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000005 /* ObjToSchematicIOSTests.swift */; };
+		A10000000000000000000017 /* ObjToSchematicKit in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000027 /* ObjToSchematicKit */; };
+		A10000000000000000000018 /* ObjToSchematicKit in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000027 /* ObjToSchematicKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -26,7 +27,6 @@
 /* Begin PBXFileReference section */
 		A10000000000000000000001 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A10000000000000000000002 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
-		A10000000000000000000003 /* WebAssets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = WebAssets; sourceTree = "<group>"; };
 		A10000000000000000000004 /* ObjToSchematicIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ObjToSchematicIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000000000000000000005 /* ObjToSchematicIOSTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjToSchematicIOSTests.swift; sourceTree = "<group>"; };
 		A10000000000000000000006 /* ObjToSchematicIOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ObjToSchematicIOSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -38,6 +38,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A10000000000000000000017 /* ObjToSchematicKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -45,6 +46,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A10000000000000000000018 /* ObjToSchematicKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -66,7 +68,6 @@
 				A10000000000000000000001 /* AppDelegate.swift */,
 				A10000000000000000000002 /* MainViewController.swift */,
 				A10000000000000000000007 /* Info.plist */,
-				A10000000000000000000003 /* WebAssets */,
 			);
 			path = ObjToSchematicIOS;
 			sourceTree = "<group>";
@@ -103,6 +104,9 @@
 			);
 			dependencies = (
 			);
+			packageProductDependencies = (
+				A10000000000000000000027 /* ObjToSchematicKit */,
+			);
 			name = ObjToSchematicIOS;
 			productName = ObjToSchematicIOS;
 			productReference = A10000000000000000000004 /* ObjToSchematicIOS.app */;
@@ -120,6 +124,9 @@
 			);
 			dependencies = (
 				A10000000000000000000032 /* PBXTargetDependency */,
+			);
+			packageProductDependencies = (
+				A10000000000000000000027 /* ObjToSchematicKit */,
 			);
 			name = ObjToSchematicIOSTests;
 			productName = ObjToSchematicIOSTests;
@@ -153,6 +160,9 @@
 				Base,
 			);
 			mainGroup = A10000000000000000000050;
+			packageReferences = (
+				A10000000000000000000028 /* XCLocalSwiftPackageReference "ObjToSchematicKit" */,
+			);
 			productRefGroup = A10000000000000000000053 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -168,7 +178,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A10000000000000000000013 /* WebAssets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -199,6 +208,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		A10000000000000000000028 /* XCLocalSwiftPackageReference "ObjToSchematicKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../ObjToSchematicKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A10000000000000000000027 /* ObjToSchematicKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A10000000000000000000028 /* XCLocalSwiftPackageReference "ObjToSchematicKit" */;
+			productName = ObjToSchematicKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */

@@ -1,4 +1,6 @@
 import { InMemoryFileLike } from './in_memory_file_like';
+import { IOSPathFileLike } from './ios_path_file_like';
+import { NativeFileBridge } from './native_file_bridge';
 import { TWebHeadlessResult, createDefaultWebHeadlessConfig, runWebHeadless } from './web_headless';
 
 type TIOSMessagePayload = {
@@ -152,6 +154,34 @@ export async function runSampleConversion(
         // eslint-disable-next-line no-console
         console.error('runSampleConversion failed', errorDescription);
         poster('conversionState', { message: 'failed', error: errorDescription });
+        throw error;
+    }
+}
+
+export async function runConversionFromObjPath(
+    objAbsolutePath: string,
+    poster: TIOSMessagePoster = defaultPoster,
+): Promise<TWebHeadlessResult> {
+    const bridge = new NativeFileBridge();
+    const objFile = new IOSPathFileLike(objAbsolutePath, bridge, 'model/obj');
+    const config = createDefaultWebHeadlessConfig(objFile);
+
+    poster('conversionState', { message: 'started' });
+
+    try {
+        const result = await runWebHeadless(config);
+        poster('conversionComplete', {
+            filename: result.filename,
+            size: result.content.length,
+            base64: bytesToBase64(result.content),
+        });
+        poster('conversionState', { message: 'finished' });
+        return result;
+    } catch (error: any) {
+        const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+        // eslint-disable-next-line no-console
+        console.error('runConversionFromObjPath failed', message);
+        poster('conversionState', { message: 'failed', error: message });
         throw error;
     }
 }

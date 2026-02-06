@@ -124,6 +124,7 @@ Here is where you can edit the materials that the loaded model uses. Any changes
 ## iOS Embedded Headless Runtime
 - Build the embedded web conversion bundle with `npm run build:ios-web`.
 - Open `ios/ObjToSchematicIOS/ObjToSchematicIOS.xcodeproj` and run the app target.
-- Tap `Convert Truck OBJ` in the app to run an in-webview headless `.obj -> .schem` conversion.
+- Tap `Convert Demo OBJ` in the app to run an in-webview headless `.obj -> .schem` conversion.
 - JS console logs are bridged to iOS logs with `WKScriptMessageHandler`, so conversion logs are visible in Xcode.
 - Run `npm run test:headless-web` for the new unit/integration tests that validate the headless web pipeline.
+- For production path-based use from Swift, call `runConversion(objPath:)` and pass the absolute `.obj` path inside the app container.
